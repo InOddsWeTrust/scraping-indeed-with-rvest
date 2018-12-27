@@ -1,0 +1,143 @@
+# Packages.
+library("rvest")
+library("stringr")
+library("beepr")
+
+# Set working directory.
+setwd("Your chosen directory.")
+
+# Static variables.
+cities <- c('Abbotsford', 'Burnaby', 'Campbell+River', 'Central Saanich',
+            'Chilliwack', 'Coldstream', 'Colwood', 'Comox', 'Coquitlam',
+            'Courtenay', 'Cranbrook', 'Dawson+Creek', 'Delta', 'Esquimalt',
+            'Fort+St.+John', 'Kamloops', 'Kelowna', 'Lake+Country', 'Langford',
+            'Langley', 'Maple+Ridge', 'Mission', 'Nanaimo', 'Nelson',
+            'New+Westminster', 'North+Cowichan', 'North+Saanich',
+            'North+Vancouver', 'Oak+Bay', 'Parksville', 'Penticton',
+            'Pitt+Meadows', 'Port+Alberni', 'Port+Coquitlam', 'Port+Moody',
+            'Powell+River', 'Prince+George', 'Prince+Rupert', 'Quesnel',
+            'Richmond', 'Saanich', 'Salmon+Arm', 'Sechelt', 'Sidney', 'Sooke',
+            'Squamish', 'Summerland', 'Surrey', 'Terrace', 'Vancouver', 
+            'Vernon', 'Victoria', 'View+Royal', 'West+Kelowna',
+            'West+Vancouver', 'Whistler', 'White+Rock', 'Williams+Lake')
+
+province <- "BC"
+
+jobsearch <- "marketing"
+
+# Dynamic variables.
+i <- 1
+resultsStart <- 0
+end <- 50
+
+# Scraping loop start.
+#-------------------------------------------------------------------------------
+while(resultsStart <= end) {
+#-------------------------------------------------------------------------------
+
+  # Retreive webpage.
+  indeedPage <- paste("https://www.indeed.ca/jobs?q=",jobsearch, "&l=",
+                      cities[i], ",+", province,
+                      "&radius=0&sort=date&limit=50&start=0", sep = "") %>%
+                  read_html()
+  
+  # Job title.
+  job <- indeedPage %>% 
+    html_nodes(xpath = "//div[@data-tn-component='organicJob']
+               /h2/a/@title") %>%
+      html_text()
+  
+  # Job link.
+  jobLink <- indeedPage %>% 
+                html_nodes(xpath = "//div[@data-tn-component='organicJob']
+                                    /h2/a/@href") %>%
+                  html_text()
+  
+  jobLink <- paste("https://www.indeed.ca", jobLink, sep = "")
+  
+  
+  # Company.
+  company <- indeedPage %>% 
+                html_nodes(xpath = "//div[@data-tn-component='organicJob']
+                                    //span[@class='company']") %>%
+                  html_text() %>%
+                    str_replace_all("\n        ", "")
+  
+  # Summary and salary data scraped together.
+  summarySalary <- indeedPage %>% 
+                    html_nodes(xpath = "//div[@data-tn-component='organicJob']
+                                        //span[@class='summary'] |
+                                        //div[@data-tn-component='organicJob']
+                                       //span[@class='no-wrap']") %>%
+                      html_text() %>%
+                        str_replace("\n", "") %>%
+                          str_trim()
+  
+  # Using the summary data to fill in corresponding salary NA values.  
+  j <- 1
+  salary <- c()
+  summary <- c()
+  
+  while(j <= length(summarySalary)) {
+  
+    if(30 <= nchar(summarySalary[j])) {
+      
+      summary <- append(summary, summarySalary[j])
+      salary <- append(salary, NA)
+      j = j + 1
+      
+    } else {
+      
+      salary <- append(salary, summarySalary[j]) 
+      summary <- append(summary, summarySalary[j + 1])
+      j = j + 2
+      
+    }
+    
+  }      
+  
+  # Date posted when scraped.  
+  datePosted <- indeedPage %>% 
+                  html_nodes(xpath = "//div[@data-tn-component='organicJob']
+                                      //span[@class='date']") %>%
+                    html_text()
+  
+  # City.
+  city <- indeedPage %>% 
+    html_nodes(xpath = "//div[@data-tn-component='organicJob']
+               //span[@class='location']") %>%
+    html_text()  
+                
+  
+  # Build table.
+  if(!exists("indeedJobs")) {
+    
+    indeedJobs <- cbind.data.frame(job, jobLink, company, salary,
+                        summary, c(Sys.Date()), datePosted, city)
+    
+  } else {
+     
+    indeedJobs <- indeedJobs %>%
+                    rbind(cbind.data.frame(job, jobLink, company, salary,
+                                summary, c(Sys.Date()), datePosted, city))
+    
+  }
+    
+  # Scraping loop end.
+  #-----------------------------------------------------------------------------
+  str(indeedJobs)
+  resultsStart <- resultsStart + 50
+  Sys.sleep(3)
+  
+}
+  #-----------------------------------------------------------------------------
+
+# Export CSV.
+write.csv(indeedJobs, "indeedJobs.csv", row.names = FALSE)
+
+# Print next URL for search.
+paste("https://www.indeed.ca/jobs?q=",jobsearch, "&l=",cities[i + 1],
+      ",+", province, "&radius=0&sort=date&limit=50&start=0", sep = "")
+
+# Notify when done. 
+beep("treasure")
