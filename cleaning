@@ -1,0 +1,44 @@
+# Packages.
+library("stringr")
+library("dplyr")
+
+# Set working directory.
+setwd("Your chosen directory.")
+
+# Retreive scraped data set.
+indeedJobs <- read.csv("indeedJobs.csv", stringsAsFactors = FALSE)
+
+# Look at data.
+str(indeedJobs)
+
+# Look at date columns.
+head(indeedJobs$datePosted, n = 20)
+head(indeedJobs$`c(Sys.Date())`, n = 20)
+
+# Convert date posted column to day relative to date scraped.
+indeedJobs$datePosted[str_detect(indeedJobs$datePosted, "Today")] <- "0"
+
+indeedJobs$datePosted[str_detect(indeedJobs$datePosted, "ago")] <- 
+  indeedJobs$datePosted[str_detect(indeedJobs$datePosted, "ago")] %>%
+    str_extract_all("\\d.", simplify = TRUE) %>%
+      str_trim()
+
+# Convert date posted to numeric format.
+indeedJobs$datePosted <- as.numeric(indeedJobs$datePosted)
+
+# Convert scraped date to date format.
+indeedJobs$`c(Sys.Date())` <- as.Date(indeedJobs$`c(Sys.Date())`)
+
+# Minus date posted from date scraped.
+indeedJobs$datePosted <- indeedJobs$`c(Sys.Date())` - indeedJobs$datePosted
+
+# Remove unneccassy column.
+indeedJobs <- select(indeedJobs, -`c(Sys.Date())`)
+
+# Remove duplicate job postings.
+indeedJobs <- distinct(indeedJobs, job, company, .keep_all = TRUE)
+
+# Export CSV.
+write.csv(indeedJobs, "indeedJobs.csv", row.names = FALSE)
+
+
