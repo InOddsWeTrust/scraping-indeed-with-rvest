@@ -25,13 +25,12 @@ province <- "BC"
 
 jobsearch <- "marketing"
 
-# Index variable defined so while loop can start. 
+# Country index variable defined so while loop can start. 
 i <- 1
 
-# Dynamic variables.
+# Loop to define variables for city being scraped.
 while(i <= length(cities)) {
 
-  # Define variables for city being scraped.
   resultsStart <- 0
   
   indeedPage <- paste("https://www.indeed.ca/jobs?q=",jobsearch, "&l=",
@@ -43,8 +42,9 @@ while(i <= length(cities)) {
   end <- indeedPage %>%
           html_nodes(xpath = "//div[@id='searchCount']") %>%
             html_text() %>%
-              str_extract("\\d\\d") %>%                                         # Regular expression needs to be fixed.
-                as.numeric()
+              str_remove("\n        Page 1 of ") %>% 
+                str_remove(" jobs") %>%
+                  as.numeric()
   
   end <- round(end / 50) * 50
 
@@ -162,3 +162,4 @@ write.csv(indeedJobs, "indeedJobs.csv", row.names = FALSE)
 
 # Notify when done. 
 beep("treasure")
+
