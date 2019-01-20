@@ -4,7 +4,7 @@ library("stringr")
 library("beepr")
 
 # Set working directory.
-setwd("C:/Users/Owner/Desktop/R & Statistics/Blog/Scraping Indeed Jobs")
+setwd("Your directory.")
 
 # Static variables.
 cities <- c('Abbotsford', 'Burnaby', 'Campbell+River', 'Central+Saanich',
@@ -43,10 +43,17 @@ while(i <= length(cities)) {
           html_nodes(xpath = "//div[@id='searchCount']") %>%
             html_text() %>%
               str_remove("\n        Page 1 of ") %>% 
-                str_remove(" jobs") %>%
-                  as.numeric()
+                str_remove(",") %>%
+                  str_remove(" jobs") %>%
+                    as.numeric()
   
   end <- round(end / 50) * 50
+  
+  if(end > 1000) {
+    
+    end = 1000
+    
+  }
 
   # Scraping loop start.
   #-----------------------------------------------------------------------------
@@ -55,25 +62,25 @@ while(i <= length(cities)) {
   
     # Job title.
     job <- indeedPage %>% 
-      html_nodes(xpath = "//div[@data-tn-component='organicJob']
-                 /h2/a/@title") %>%
-        html_text()
+            html_nodes(xpath = "//div[@data-tn-component='organicJob']
+                       /h2/a/@title") %>%
+              html_text()
     
     # Job link.
     jobLink <- indeedPage %>% 
-                  html_nodes(xpath = "//div[@data-tn-component='organicJob']
+                html_nodes(xpath = "//div[@data-tn-component='organicJob']
                                       /h2/a/@href") %>%
-                    html_text()
+                  html_text()
     
     jobLink <- paste("https://www.indeed.ca", jobLink, sep = "")
     
     
     # Company.
     company <- indeedPage %>% 
-                  html_nodes(xpath = "//div[@data-tn-component='organicJob']
+                html_nodes(xpath = "//div[@data-tn-component='organicJob']
                                       //span[@class='company']") %>%
-                    html_text() %>%
-                      str_replace_all("\n        ", "")
+                  html_text() %>%
+                    str_trim()
     
     # Summary and salary data scraped together.
     summarySalary <- indeedPage %>% 
@@ -82,8 +89,7 @@ while(i <= length(cities)) {
                                           //div[@data-tn-component='organicJob']
                                          //span[@class='no-wrap']") %>%
                         html_text() %>%
-                          str_replace("\n", "") %>%
-                            str_trim()
+                          str_trim()
     
     # Using the summary data to fill in corresponding salary NA values.  
     j <- 1
@@ -137,17 +143,15 @@ while(i <= length(cities)) {
       
     # Scraping loop end.
     #---------------------------------------------------------------------------
-    indeedPage <- paste("https://www.indeed.ca/jobs?q=",jobsearch, "&l=",
-                        cities[i], ",+", province,
-                        "&radius=0&sort=date&limit=50&start=", resultsStart,
-                        sep = "") %>%
-      read_html()
-    
     str(indeedJobs)
     resultsStart <- resultsStart + 50
     Sys.sleep(5)
     
-    
+    indeedPage <- paste("https://www.indeed.ca/jobs?q=",jobsearch, "&l=",
+                        cities[i], ",+", province,
+                        "&radius=0&sort=date&limit=50&start=", resultsStart,
+                        sep = "") %>%
+                    read_html()
     
   }
     #---------------------------------------------------------------------------
@@ -162,4 +166,3 @@ write.csv(indeedJobs, "indeedJobs.csv", row.names = FALSE)
 
 # Notify when done. 
 beep("treasure")
-
