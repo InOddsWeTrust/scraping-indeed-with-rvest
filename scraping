@@ -87,7 +87,7 @@ while(i <= length(cities)) {
                       html_nodes(xpath = "//div[@data-tn-component='organicJob']
                                           //span[@class='summary'] |
                                           //div[@data-tn-component='organicJob']
-                                         //span[@class='no-wrap']") %>%
+                                         //div[@class='salarySnippet']") %>%
                         html_text() %>%
                           str_trim()
     
