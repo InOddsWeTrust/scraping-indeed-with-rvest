@@ -4,7 +4,7 @@ library("stringr")
 library("beepr")
 
 # Set working directory.
-setwd("Your directory.")
+setwd("C:/Users/Owner/Desktop/R & Statistics/Blog/Scraping Indeed Jobs")
 
 # Static variables.
 cities <- c('Abbotsford', 'Burnaby', 'Campbell+River', 'Central+Saanich',
@@ -63,7 +63,7 @@ while(i <= length(cities)) {
     # Job title.
     job <- indeedPage %>% 
             html_nodes(xpath = "//div[@data-tn-component='organicJob']
-                       /h2/a/@title") %>%
+                       /h2/a") %>%
               html_text()
     
     # Job link.
@@ -85,9 +85,9 @@ while(i <= length(cities)) {
     # Summary and salary data scraped together.
     summarySalary <- indeedPage %>% 
                       html_nodes(xpath = "//div[@data-tn-component='organicJob']
-                                          //span[@class='summary'] |
+                                         //div[@class='salarySnippet'] |
                                           //div[@data-tn-component='organicJob']
-                                         //div[@class='salarySnippet']") %>%
+                                          //span[@class='summary']") %>%
                         html_text() %>%
                           str_trim()
     
@@ -130,13 +130,13 @@ while(i <= length(cities)) {
     # Build table.
     if(!exists("indeedJobs")) {
       
-      indeedJobs <- cbind.data.frame(job, jobLink, company, salary,
+      indeedJobs <- data.frame(job, jobLink, company, salary,
                           summary, c(Sys.Date()), datePosted, city)
       
     } else {
        
       indeedJobs <- indeedJobs %>%
-                      rbind(cbind.data.frame(job, jobLink, company, salary,
+                      rbind(data.frame(job, jobLink, company, salary,
                                   summary, c(Sys.Date()), datePosted, city))
       
     }
