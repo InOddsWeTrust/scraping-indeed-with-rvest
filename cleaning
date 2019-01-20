@@ -3,7 +3,7 @@ library("stringr")
 library("dplyr")
 
 # Set working directory.
-setwd("C:/Users/Owner/Desktop/R & Statistics/Blog/Scraping Indeed Jobs")
+setwd("Your directory.")
 
 # Retreive scraped data set.
 indeedJobs <- read.csv("indeedJobs.csv", stringsAsFactors = FALSE)
